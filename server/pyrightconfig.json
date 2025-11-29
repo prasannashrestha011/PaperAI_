@@ -1,6 +1,6 @@
-
 {
   "include": ["."],
+  "venv": "env",
   "executionEnvironments": [
     {
       "root": ".",
