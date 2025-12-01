@@ -8,7 +8,7 @@ from fastapi import Cookie, HTTPException
 load_dotenv()
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")# change to a strong secret
 ALGORITHM =os.getenv("ALGORITHM")
-ACCESS_TOKEN_EXPIRE_MINUTES =os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES") 
+ACCESS_TOKEN_EXPIRE_MINUTES =60 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
