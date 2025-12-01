@@ -8,7 +8,7 @@ from typing import List,Dict,Any
 from langchain_core.documents import Document
 import json
 import spacy
-def _create_kg_search_tool(session_id:str) -> BaseTool:
+def _create_kg_search_tool(document_id:str) -> BaseTool:
         """Create knowledge graph search tool for agent"""
         nlp_model = spacy.load("en_core_web_sm")
         @tool
@@ -40,7 +40,7 @@ def _create_kg_search_tool(session_id:str) -> BaseTool:
                     MATCH (n:Entity)-[r:RELATED]->(m:Entity)
                     WHERE (toLower(n.name) CONTAINS $entity
                     OR toLower(m.name) CONTAINS $entity)
-                    AND r.session_id = $session_id
+                    AND r.document_id = $document_id
                     RETURN n.name AS subject, r.type AS relation, m.name AS object, r.evidence as evidence
                     LIMIT $limit
                 """
@@ -51,7 +51,7 @@ def _create_kg_search_tool(session_id:str) -> BaseTool:
                             result = await session.run(
                                 query_cypher,
                                 entity=entity.lower(),
-                                session_id=session_id,
+                                document_id=document_id,
                                 limit=20,
                             )
                             records = [record async for record in result]
@@ -103,7 +103,7 @@ def _create_kg_search_tool(session_id:str) -> BaseTool:
  
 
     
-def _create_kg_entity_lookup_tool(session_id:str) -> BaseTool:
+def _create_kg_entity_lookup_tool(document_id:str) -> BaseTool:
         """Create tool to get all relationships for a specific entity"""
         
         @tool
@@ -117,13 +117,13 @@ def _create_kg_entity_lookup_tool(session_id:str) -> BaseTool:
             try:
                 query = """
                 MATCH (e)-[r]->(target)
-                WHERE toLower(e.name) CONTAINS toLower($entity) AND r.session_id=$session_id
+                WHERE toLower(e.name) CONTAINS toLower($entity) AND r.document_id=$document_id
                 RETURN e.name + ' --' + type(r) + '--> ' + target.name AS relationship, r.evidence as evidence
                 LIMIT 20
                 """
                 
                 async with driver.session() as session:
-                    results = await session.run(query, entity=entity_name,session_id=session_id)
+                    results = await session.run(query, entity=entity_name,document_id=document_id)
                     records= [record async for record in results]
                 
                 if not records:
@@ -145,7 +145,7 @@ def _create_kg_entity_lookup_tool(session_id:str) -> BaseTool:
         
         return entity_lookup
 
-def _create_multi_hop_tool(session_id:str) -> BaseTool:
+def _create_multi_hop_tool(document_id:str) -> BaseTool:
         """Create tool for multi-hop reasoning queries"""
         
         @tool
@@ -162,7 +162,7 @@ def _create_multi_hop_tool(session_id:str) -> BaseTool:
                   MATCH path = (start)-[*1..3]->(end)
 WHERE (toLower(start.name) CONTAINS $user_query
    OR toLower(end.name) CONTAINS $user_query)
-AND ALL(rel IN relationships(path) WHERE rel.session_id = $session_id)
+AND ALL(rel IN relationships(path) WHERE rel.document_id = $document_id)
 WITH path, length(path) AS pathLength
 ORDER BY pathLength
 LIMIT 10
@@ -174,7 +174,7 @@ RETURN
                 """
                 
                 async with driver.session() as session:
-                    results = await session.run(query, user_query=path_query,session_id=session_id)
+                    results = await session.run(query, user_query=path_query,document_id=document_id)
                     records=[record async for record in results]
                 
                 if not records:
@@ -215,7 +215,7 @@ RETURN
         return multi_hop_search
     
 
-def _create_structured_retrieval_tools(session_id:str)->List[BaseTool]:
+def _create_structured_retrieval_tools(document_id:str)->List[BaseTool]:
      
     @tool
     async def paper_lookup():
@@ -229,15 +229,15 @@ def _create_structured_retrieval_tools(session_id:str)->List[BaseTool]:
         
             
         Returns:
-            Dictionary containing paper title and session_id, or None if not found
+            Dictionary containing paper title and document_id, or None if not found
         """
 
         query="""
-            MATCH (p:Paper {session_id:$session_id})
+            MATCH (p:Paper {document_id:$document_id})
             RETURN p
             """
         async with driver.session() as session:
-            result = await session.run(query, session_id=session_id)
+            result = await session.run(query, document_id=document_id)
             records = [record async for record in result]
         if not records:
             print("404")
@@ -247,7 +247,7 @@ def _create_structured_retrieval_tools(session_id:str)->List[BaseTool]:
               return
         paper_data={
               "title":paper["title"],
-              "session_id":paper["session_id"]
+              "document_id":paper["document_id"]
         }
         return paper_data
     
@@ -268,11 +268,11 @@ def _create_structured_retrieval_tools(session_id:str)->List[BaseTool]:
         """
 
         query="""
-                MATCH (a:Author)-[AUTHORED]->(p:Paper {session_id:$session_id})
+                MATCH (a:Author)-[AUTHORED]->(p:Paper {document_id:$document_id})
                 RETURN a as author
              """
         async with driver.session() as session:
-            results = await session.run(query, session_id=session_id)
+            results = await session.run(query, document_id=document_id)
             records = [record async for record in results]
         
         authors=[]
@@ -306,12 +306,12 @@ def _create_structured_retrieval_tools(session_id:str)->List[BaseTool]:
         """
         
         query="""
-            MATCH (p:Paper {session_id:$session_id})-[r:HAS_SECTION]->(s:Section)
+            MATCH (p:Paper {document_id:$document_id})-[r:HAS_SECTION]->(s:Section)
             RETURN s as section        
             """   
         
         async with driver.session() as session:
-            results = await session.run(query, session_id=session_id)
+            results = await session.run(query, document_id=document_id)
             records = [record async for record in results]
         sections=[]
         for record in records:
@@ -323,7 +323,7 @@ def _create_structured_retrieval_tools(session_id:str)->List[BaseTool]:
                 continue 
             
             section={
-                "session_id":session_id,
+                "document_id":document_id,
                 "section_name":section_node["section_name"],
                 "start_page":section_node["start_page"],
                 "evidence":section_node["content"],

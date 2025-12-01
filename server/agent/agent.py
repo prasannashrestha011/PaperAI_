@@ -23,7 +23,6 @@ class Neo4jRAGSystem:
 
         self.user_id = user_id
         self.document_id = document_id
-        self.session_id = f"{user_id}-{document_id}"
         self.provider = provider 
         self.model = model
         self.llm = ModelFactory.create_chat_model(provider=provider, model_name=model, temperature=0.3)
@@ -33,10 +32,10 @@ class Neo4jRAGSystem:
   
     def _create_agent(self):
         tools = [
-            _create_kg_search_tool(session_id=self.session_id),
-            _create_kg_entity_lookup_tool(session_id=self.session_id),
-            _create_multi_hop_tool(session_id=self.session_id),
-            *_create_structured_retrieval_tools(session_id=self.session_id)
+            _create_kg_search_tool(document_id=self.document_id),
+            _create_kg_entity_lookup_tool(document_id=self.document_id),
+            _create_multi_hop_tool(document_id=self.document_id),
+            *_create_structured_retrieval_tools(document_id=self.document_id)
         ]
         
       
@@ -61,7 +60,7 @@ Your primary task is to answer user questions by systematically querying the kno
 
 
 Context:
- -session_id: use this id to fetch data from knowledge store using the tools
+ -document_id: use this id to fetch data from knowledge store using the tools
 1. entity_relationship_lookup - retrieve all direct relationships for an entity
 2. knowledge_graph_search - find relevant concepts, facts, and supporting relationships
 3. multi_hop_reasoning - explore indirect connections and hidden links in the knowledge graph

@@ -9,7 +9,8 @@ import spacy
 from unstructured.partition.pdf import partition_pdf
 from .graph_store import Neo4jKnowledgeGraph
 from .extractor import Entity_Relation_Extractor
-
+import requests
+from io import BytesIO
 from .graph_tools import parse_str_to_json
 from .graph_tools import build_structured_graph
 import os
@@ -19,21 +20,22 @@ nlp = spacy.load("en_core_web_sm")
 
 
 def clean_text(text: str) -> str:
-
     text = text.replace("“", '"').replace("”", '"').replace("‘", "'").replace("’", "'")
-
     return text
 
-def extract_text_from_pdf(pdf_path: str, quality: str) -> str:
+def extract_text_from_pdf(url: str, quality: str) -> str:
     """Extraction using unstructured: returns a single string with page markers"""
+    response = requests.get(url, allow_redirects=True)
+    response.raise_for_status()  
+    pdf_bytes = response.content
+    pdf_file_like = BytesIO(pdf_bytes)
     elements = partition_pdf(
-        filename=pdf_path,
+        file=pdf_file_like,
         strategy="hi_res" if quality == "H" else "fast",
         infer_table_structure=True if quality == "H" else False,
         languages=['english']  
     )
     pages = {}
-
     # Group text by page
     for el in elements:
         if hasattr(el, "text") and el.text.strip():
