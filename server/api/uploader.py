@@ -1,33 +1,23 @@
 
 
-from datetime import  datetime,timezone
 import uuid
-from fastapi import APIRouter, File, HTTPException ,UploadFile
-from pydantic import BaseModel
-from starlette.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_413_CONTENT_TOO_LARGE, HTTP_500_INTERNAL_SERVER_ERROR 
-from pathlib import Path
+from fastapi import APIRouter, Depends, File, Form, HTTPException ,UploadFile
+from sqlalchemy.ext.asyncio.session import AsyncSession
+from database.crud.document import DocumentCRUD
+from database.crud.storage import StorageCRUD
+from database.deps import get_db
+from database.models import DocumentModel
+from schemas.document import  DocumentOut
+from starlette.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR 
 
-upload_router=APIRouter(prefix="upload")
+upload_router=APIRouter(prefix="/upload")
 
-UPLOAD_DIR=Path("/uploads/pdfs")
-UPLOAD_DIR.mkdir(parents=True,exist_ok=True)
-MAX_FILE_SIZE=10*1024*1024
 
-class UploadModel(BaseModel):
-    document_id:str
-    user_id:str
-    file_name:str
-    file_path:str
-    file_size:int
-    uploaded_timestamp:str
-        
-@upload_router.post("/pdf",response_model=UploadModel,status_code=HTTP_201_CREATED)
-async def upload_pdf(user_id:str,file:UploadFile=File(...,description="pdf file to upload")):
-    if not user_id:
-        raise HTTPException(
-            status_code=HTTP_400_BAD_REQUEST,
-            detail="Invalid user id"
-        )
+document_crud=DocumentCRUD(DocumentModel)       
+storage_crud=StorageCRUD()
+
+@upload_router.post("/pdf",response_model=DocumentOut,status_code=HTTP_201_CREATED)
+async def extract_pdf(user_id:uuid.UUID=Form(...,description="user id"),file:UploadFile=File(...,description="pdf file to upload"),db:AsyncSession=Depends(get_db)):
     if not file.filename :
         raise HTTPException(
             status_code=HTTP_400_BAD_REQUEST,
@@ -44,32 +34,22 @@ async def upload_pdf(user_id:str,file:UploadFile=File(...,description="pdf file 
             detail="Invalid file type"
         )
     try:
-        content=await file.read()
-        file_size=len(content)
-        if file_size>MAX_FILE_SIZE:
-            raise HTTPException(
-                status_code=HTTP_413_CONTENT_TOO_LARGE,
-                detail=f"File size exceeds maximum limit of {MAX_FILE_SIZE / (1024*1024)}MB"
+        doc_in=await storage_crud.upload_pdf(user_id,file)
+        if doc_in is None:
+            raise HTTPException( 
+                status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to upload the file to the bucket"
+
             )
-        user_path=UPLOAD_DIR/ user_id 
-        user_path.mkdir(exist_ok=True,parents=True)
-        document_id=uuid.uuid4().hex
-        safe_filename=f"{user_id}-{document_id}"
-        file_path=user_path/safe_filename
-
-        try:
-            with open(file_path,"wb") as f:
-                f.write(content)
-        except Exception as e:
-            raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR,detail="Couldnot stored the file")
-        uploaded_timestamp=datetime.now(timezone.utc).isoformat()
-
-        return UploadModel(
-            file_name=
-        )
-
+        doc_out=await document_crud.create(db=db,obj_in=doc_in)
+        return doc_out
 
     except Exception as e:
         print(f"Error reading file:{e}")
+        raise HTTPException( 
+                status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=e
+            )
+
 
 
