@@ -1,12 +1,11 @@
-# auth_routes.py
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
-from  database.models import  User
-from database.deps import get_db
-from utils.hashing import hash_password, verify_password
-from utils.jwt import create_access_token
+from  server.database.models import  User
+from server.database.deps import get_db
+from server.utils.hashing import hash_password, verify_password
+from server.utils.jwt import create_access_token
 auth_router = APIRouter()
 class UserCreate(BaseModel):
     username: str
@@ -23,7 +22,7 @@ async def create_user(new_user: UserCreate, db: AsyncSession = Depends(get_db)):
     
     return {"id": user.id, "username": user.username}
 
-@auth_router.post("/auth/login")
+auth_router.post("/auth/login")
 async def login_user(user:UserCreate,res:Response,db:AsyncSession=Depends(get_db)):
     result=await db.execute(select(User).where(User.username==user.username))
     db_user=result.scalars().first()
@@ -47,5 +46,4 @@ async def login_user(user:UserCreate,res:Response,db:AsyncSession=Depends(get_db
         max_age=60*60,  # 1 hour
     )
     return {"id": db_user.id, "username": db_user.username, "message": "Login successful"}
-
 

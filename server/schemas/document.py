@@ -21,4 +21,4 @@ class DocumentUpdate(BaseModel):
 
 class DocumentOut(DocumentBase):
     class Config:
-        orm_mode = True
+         from_attributes= True

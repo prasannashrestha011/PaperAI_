@@ -1,7 +1,7 @@
 import uuid
 from sqlalchemy import Column,UUID, Integer,String 
 
-from database.database import Base
+from server.database.database import Base
 
 def uuid_no_dash():
     return uuid.uuid4().hex   # removes dashes
@@ -15,7 +15,8 @@ class User(Base):
 
 class DocumentModel(Base):
     __tablename__="documents"
-    document_id=Column(UUID,primary_key=True,index=True)
+    document_id=Column(UUID,primary_key=True)
+    user_id=Column(UUID,index=True,nullable=False)
     file_name=Column(String,nullable=False)
     file_path=Column(String,nullable=False,unique=True)
     file_size=Column(Integer,nullable=False)

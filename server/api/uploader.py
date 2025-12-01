@@ -1,15 +1,16 @@
 
-
+from io import BytesIO
 import uuid
 from fastapi import APIRouter, Depends, File, Form, HTTPException ,UploadFile
+import requests
 from sqlalchemy.ext.asyncio.session import AsyncSession
-from database.crud.document import DocumentCRUD
-from database.crud.storage import StorageCRUD
-from database.deps import get_db
-from database.models import DocumentModel
-from schemas.document import  DocumentOut
+from server.database.crud.document import DocumentCRUD
+from server.database.crud.storage import StorageCRUD
+from server.database.deps import get_db
+from server.database.models import DocumentModel
+from server.schemas.document import  DocumentOut
 from starlette.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR 
-
+from server.agent.builder import build_knowledge_graph
 upload_router=APIRouter(prefix="/upload")
 
 
@@ -42,6 +43,8 @@ async def extract_pdf(user_id:uuid.UUID=Form(...,description="user id"),file:Upl
 
             )
         doc_out=await document_crud.create(db=db,obj_in=doc_in)
+        await build_knowledge_graph(pdf_path=str(doc_out.file_path),document_id=str(doc_out.document_id),provider="gemini",model="gemini-2.5-flash",quality="H")
+
         return doc_out
 
     except Exception as e:
