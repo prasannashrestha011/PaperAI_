@@ -4,8 +4,7 @@ from .graph_config import driver
 class Neo4jKnowledgeGraph:
     """Optimized Neo4j storage"""
     
-    def __init__(self,document_id:str):
-        self.document_id=document_id
+    def __init__(self):
         self.driver=driver
     
     async def initialize(self):
@@ -26,7 +25,7 @@ class Neo4jKnowledgeGraph:
             except Exception as e:
                 print(f"Note: {e}\n")
     
-    async def clear_database(self):
+    async def clear_database(self,document_id):
         """Clear relationships for this user/document"""
         query = """
             MATCH ()-[r:RELATED]->()
@@ -37,14 +36,14 @@ class Neo4jKnowledgeGraph:
         async with self.driver.session() as session:
             await session.execute_write(
                 lambda tx: tx.run(query,
-                    document_id=self.document_id
+                    document_id=document_id
                 )
             )
 
-        print(f"Database cleared for session_id={self.document_id}")
+        print(f"Database cleared for document_id={document_id}")
 
     
-    async def store_triples_batch(self, triples: List[Dict[str,Any]], source: str):
+    async def store_triples_batch(self,document_id:str, triples: List[Dict[str,Any]], source: str):
         """Store triples efficiently"""
         if not triples:
             return
@@ -61,7 +60,7 @@ class Neo4jKnowledgeGraph:
             "page": triple.get("page", None),
             "confidence": triple.get("confidence", "medium"),
             "source": source,
-            "document_id":self.document_id
+            "document_id":document_id
         }
         for triple in triples
         ]
@@ -92,7 +91,7 @@ class Neo4jKnowledgeGraph:
                 print(f"Storage error: {e}\n")
                 raise
         
-    async def get_statistics(self) -> Dict:
+    async def get_statistics(self,document_id:str) -> Dict:
         """Get statistics"""
         stats = {}
         async with self.driver.session() as session:     
@@ -104,7 +103,7 @@ class Neo4jKnowledgeGraph:
                             """   
             result = await session.execute_write(
                 lambda tx:tx.run(
-                    query=query1,document_id=self.document_id
+                    query=query1,document_id=document_id
                 )
             )
             rec=await result.single()
@@ -120,14 +119,14 @@ class Neo4jKnowledgeGraph:
             """
             
             result=await session.execute_read(
-                lambda tx:tx.run(query,document_id=self.document_id)
+                lambda tx:tx.run(query,document_id=document_id)
             )
             sample=await result.data()
             stats['samples']=sample
         
         return stats
     
-    async def show_sample(self, limit: int = 20):
+    async def show_sample(self,document_id:str,limit: int = 20):
         """Show sample relationships"""
         query = """
         MATCH (a:Entity)-[r:RELATED]->(b:Entity)
@@ -137,7 +136,7 @@ class Neo4jKnowledgeGraph:
         """
         async with self.driver.session() as session:
             results = await session.execute_read(
-                lambda tx:tx.run(query,document_id=self.document_id)
+                lambda tx:tx.run(query,document_id=document_id)
             )
             samples=await results.data()
         
@@ -150,3 +149,4 @@ class Neo4jKnowledgeGraph:
             
             print(f"\n{'='*90}\n")
 
+kg_store = Neo4jKnowledgeGraph()

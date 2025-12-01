@@ -7,7 +7,7 @@ File contains:
 import spacy
 
 from unstructured.partition.pdf import partition_pdf
-from .graph_store import Neo4jKnowledgeGraph
+from server.agent.graph_store import kg_store
 from .extractor import Entity_Relation_Extractor
 import requests
 from io import BytesIO
@@ -16,7 +16,6 @@ from .graph_tools import build_structured_graph
 import os
 import time
 
-nlp = spacy.load("en_core_web_sm")
 
 
 def clean_text(text: str) -> str:
@@ -56,15 +55,10 @@ def extract_text_from_pdf(url: str, quality: str) -> str:
 
 
 
-async def build_knowledge_graph(pdf_path: str,session_id:str,provider:str,model:str,quality:str):
+async def build_knowledge_graph(pdf_path: str,document_id:str,provider:str,model:str,quality:str):
     """Build knowledge graph from PDF"""
 
-    # Initialize
-    kg_store = Neo4jKnowledgeGraph(session_id=session_id)
-    await kg_store.initialize()
-    
- 
-    # Extract text
+    nlp = spacy.load("en_core_web_sm")
     print(f"Reading: {pdf_path}")
     start=time.perf_counter()
     text = extract_text_from_pdf(pdf_path,quality)
@@ -84,10 +78,10 @@ async def build_knowledge_graph(pdf_path: str,session_id:str,provider:str,model:
 
     print(structure)
     struct_data=parse_str_to_json(structure)
-    await build_structured_graph(struct_data,session_id)
+    await build_structured_graph(struct_data,document_id)
 
     triples = await extractor.extract_from_text(text)
-    await kg_store.store_triples_batch(triples, os.path.basename(pdf_path))
+    await kg_store.store_triples_batch(document_id,triples, os.path.basename(pdf_path))
 
     print(f"PDF extraction time: {end-start:.4f} seconds ")
 
