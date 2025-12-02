@@ -1,6 +1,7 @@
 import uuid
 from fastapi import APIRouter, Depends, File, Form, HTTPException ,UploadFile
-from server.schemas.request import AskQuery
+from server.database.crud.chat_session import ChatSessionCRUD
+from server.schemas.request import AskQuery, SessionBody
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from server.database.crud.document import DocumentCRUD
 from server.database.crud.storage import StorageCRUD
@@ -9,14 +10,14 @@ from server.database.models import DocumentModel
 from server.schemas.document import  DocumentOut
 from starlette.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR 
 from server.agent.builder import build_knowledge_graph
-from server.schemas.response import AgentResponse
+from server.schemas.response import AgentResponse,ExtractionResponse
 upload_router=APIRouter(prefix="/upload")
 
 
 document_crud=DocumentCRUD(DocumentModel)       
 storage_crud=StorageCRUD()
 
-@upload_router.post("/pdf",response_model=DocumentOut,status_code=HTTP_201_CREATED)
+@upload_router.post("/pdf",response_model=ExtractionResponse,status_code=HTTP_201_CREATED)
 async def extract_pdf(user_id:uuid.UUID=Form(...,description="user id"),file:UploadFile=File(...,description="pdf file to upload"),db:AsyncSession=Depends(get_db)):
     if not file.filename :
         raise HTTPException(
@@ -44,16 +45,19 @@ async def extract_pdf(user_id:uuid.UUID=Form(...,description="user id"),file:Upl
         doc_out=await document_crud.create(db=db,obj_in=doc_in)
         await build_knowledge_graph(pdf_path=str(doc_out.file_path),document_id=str(doc_out.document_id),provider="gemini",model="gemini-2.5-flash",quality="H")
 
-        return doc_out
+        session_in=SessionBody(user_id=user_id,document_id=uuid.UUID(str(doc_out.document_id)),provider="gemini",model="gemini-2.5-flash")
+        session_out=await ChatSessionCRUD.create_session(session_in,db)
+
+        response=ExtractionResponse(doc_out=doc_out,session_out=session_out)
+
+        return response 
 
     except Exception as e:
         print(f"Error reading file:{e}")
         raise HTTPException( 
                 status_code=HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=e
+                detail=str(e)
             )
 
 
-@upload_router.post('/query',response_model=AgentResponse):
-async def ask_query(req_body:AskQuery):
 

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
-from  server.database.models import  User
+from  server.database.models import UserModel 
 from server.database.deps import get_db
 from server.utils.hashing import hash_password, verify_password
 from server.utils.jwt import create_access_token
@@ -15,7 +15,7 @@ class UserCreate(BaseModel):
 async def create_user(new_user: UserCreate, db: AsyncSession = Depends(get_db)):
 
     hashed_password=hash_password(new_user.password)
-    user = User(username=new_user.username, password=hashed_password)
+    user = UserModel(username=new_user.username, password=hashed_password)
     db.add(user)
     await db.commit()
     await db.refresh(user)
@@ -24,7 +24,7 @@ async def create_user(new_user: UserCreate, db: AsyncSession = Depends(get_db)):
 
 auth_router.post("/auth/login")
 async def login_user(user:UserCreate,res:Response,db:AsyncSession=Depends(get_db)):
-    result=await db.execute(select(User).where(User.username==user.username))
+    result=await db.execute(select(UserModel).where(UserModel.username==user.username))
     db_user=result.scalars().first()
     if not db_user:
         raise HTTPException(
