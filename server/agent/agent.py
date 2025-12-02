@@ -7,7 +7,6 @@ from .model_factory import ModelFactory
 from .output_schema import KnowledgeGraphAnswer
 
 from .tools import _create_kg_search_tool,_create_kg_entity_lookup_tool,_create_multi_hop_tool,_create_structured_retrieval_tools
-from .builder import build_knowledge_graph
 from langchain_core.runnables import RunnableConfig
 import time
 import asyncio
@@ -46,7 +45,7 @@ You are a knowledge graph reasoning expert and assistant, specializing in compre
 IMPORTANT: You MUST respond in the following structured format:
 {{
   "query_type": "<Classify the question: definition/purpose/mechanism/comparison/application>",
-  "entities_found": ["<list of main entities from the knowledge graph>"],
+  "entities": ["<list of main entities from the knowledge graph>"],
   "core_definition": "<1-2 sentence definition>",
   "mechanisms": "<2-3 sentences explaining how it works>",
   "applications": "<1-2 sentences on real-world uses>",
