@@ -1,8 +1,6 @@
-
-from io import BytesIO
 import uuid
 from fastapi import APIRouter, Depends, File, Form, HTTPException ,UploadFile
-import requests
+from server.schemas.request import AskQuery
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from server.database.crud.document import DocumentCRUD
 from server.database.crud.storage import StorageCRUD
@@ -11,6 +9,7 @@ from server.database.models import DocumentModel
 from server.schemas.document import  DocumentOut
 from starlette.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR 
 from server.agent.builder import build_knowledge_graph
+from server.schemas.response import AgentResponse
 upload_router=APIRouter(prefix="/upload")
 
 
@@ -55,4 +54,6 @@ async def extract_pdf(user_id:uuid.UUID=Form(...,description="user id"),file:Upl
             )
 
 
+@upload_router.post('/query',response_model=AgentResponse):
+async def ask_query(req_body:AskQuery):
 
