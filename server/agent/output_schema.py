@@ -6,7 +6,7 @@ The LLM follows this schema to generate the final output
 from typing import TypedDict,List
 class KnowledgeGraphAnswer(TypedDict):
     query_type: str 
-    entities_found: List[str]  
+    entities: List[str]  
     core_definition: str 
     applications: str  
     answer: str  
