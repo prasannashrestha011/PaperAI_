@@ -39,7 +39,7 @@ class StorageCRUD:
                 document_id=document_id,
                 file_name=file_name,
                 file_path=public_url, 
-                upload_timestamp=datetime.now(timezone.utc).isoformat(),
+                upload_timestamp=datetime.now(timezone.utc),
                 file_size=file_size
             )
             return doc_in 

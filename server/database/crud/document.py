@@ -1,4 +1,3 @@
-        
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from uuid import UUID
@@ -40,8 +39,6 @@ class DocumentCRUD:
            await db.delete(doc_obj)
            await db.commit()
         return doc_obj
-
-       
 
     
 
