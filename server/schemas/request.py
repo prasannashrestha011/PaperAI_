@@ -7,3 +7,10 @@ class AskQuery(BaseModel):
     query:str 
     user_id:uuid.UUID
     document_id:uuid.UUID
+
+class SessionBody(BaseModel):
+      user_id:uuid.UUID
+      document_id:uuid.UUID
+      provider:str
+      model:str
+    
