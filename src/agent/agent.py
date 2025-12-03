@@ -1,11 +1,12 @@
 
+import json
 from typing import Dict, Any, List
 from dotenv import load_dotenv 
 from langchain_core.messages import  BaseMessage
 from langchain.agents import create_agent
 from .model_factory import ModelFactory
 from .output_schema import KnowledgeGraphAnswer
-
+import ast
 from .tools import _create_kg_search_tool,_create_kg_entity_lookup_tool,_create_multi_hop_tool,_create_structured_retrieval_tools
 from langchain_core.runnables import RunnableConfig
 import time
@@ -165,20 +166,20 @@ SIMPLIFICATION RULES:
             
             if messages:
                 final_message = messages[-1]
-                final_answer = final_message.content
+                final_answer_str = final_message.content
                 tool_calls = getattr(final_message, 'tool_calls', [])
                 tool_call_count = len(tool_calls) if tool_calls else 0
             else:
-                final_answer = "No answer generated"
+                final_answer_str = "No answer generated"
                 tool_call_count = 0
             
-            print(f"\n💡 Final Answer:\n{final_answer}")
-  
             print(f"\n{'='*90}\n")
             
+            final_answer_str = final_answer_str[len("Returning structured response:"):].strip()
+            final_answer_json = ast.literal_eval(final_answer_str)
             return {
                 "question": question,
-                "answer": final_answer,
+                "answer": final_answer_json,
                 "success": True,
                 "tool_calls": tool_call_count
             }
@@ -204,9 +205,9 @@ async def main():
 
     
 
-    defaults = ("111", "111", "gemini", "gemini-2.5-flash")
+    defaults = ("111", "938a77a8-65e0-4f56-bd3b-df0b115008fc", "gemini", "gemini-2.5-flash")
     user_id="111"
-    document_id="111"
+    document_id="938a77a8-65e0-4f56-bd3b-df0b115008fc"
     provider="gemini"
     model="gemini-2.5-flash"
     agent=Neo4jRAGSystem(user_id,document_id,provider,model)
@@ -215,7 +216,10 @@ async def main():
         q = input("\nQ: ").strip()
         if q.lower() in ['exit', 'quit']: break
         if not q: continue
-        await agent.answer_question(q)
+        response=await agent.answer_question(q)
+        final_answer = response["answer"]
+        print(final_answer["answer"])
+        print(final_answer["entities"])
 
 if __name__ == "__main__":
     asyncio.run(main())
