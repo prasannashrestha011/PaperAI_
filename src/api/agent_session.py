@@ -1,7 +1,9 @@
+import json
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.status import HTTP_201_CREATED
+from src.database.crud.agent_session import get_agent_session
 from src.database.deps import get_db
 from src.schemas.response import  SessionOut
 from src.schemas.request import SessionBody
@@ -18,4 +20,10 @@ async def create_session(new_session:SessionBody,db:AsyncSession=Depends(get_db)
     except IntegrityError:
         await db.rollback()
         raise HTTPException(status_code=400, detail="Session with this document_id already exists")
-        
+
+@session_router.post("/ask")
+async def get_agent(session_in:SessionBody,question:str):
+    agent=await get_agent_session(**session_in.model_dump())
+    if agent:
+        response=await agent.answer_question(question)
+

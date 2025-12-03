@@ -1,6 +1,7 @@
 import json
 from src.database.redis_client import redis_client
 from src.agent.agent import Neo4jRAGSystem
+from src.schemas.request import SessionBody
 
 async def get_agent_session(user_id:str,document_id:str,provider,model):
     key=f"agent:{user_id}-{document_id}"
