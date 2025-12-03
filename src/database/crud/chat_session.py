@@ -2,12 +2,12 @@
 import uuid
 
 from sqlalchemy import select
-from server.database.models import SessionModel
-from server.schemas.request import SessionBody
+from src.database.models import SessionModel
+from src.schemas.request import SessionBody
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from typing import List, Optional
 
-from server.schemas.response import SessionOut
+from src.schemas.response import SessionOut
 class ChatSessionCRUD:
     def __init__(self) -> None:
         pass

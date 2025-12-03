@@ -2,10 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
-from  server.database.models import UserModel 
-from server.database.deps import get_db
-from server.utils.hashing import hash_password, verify_password
-from server.utils.jwt import create_access_token
+from  src.database.models import UserModel 
+from src.database.deps import get_db
+from src.utils.hashing import hash_password, verify_password
+from src.utils.jwt import create_access_token
 auth_router = APIRouter()
 class UserCreate(BaseModel):
     username: str

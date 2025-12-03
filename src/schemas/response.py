@@ -5,7 +5,7 @@ from typing import List
 import uuid
 from pydantic import BaseModel
 
-from server.schemas.document import DocumentBase
+from src.schemas.document import DocumentBase
 
 
 

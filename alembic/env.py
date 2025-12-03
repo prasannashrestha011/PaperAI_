@@ -7,8 +7,8 @@ import os
 import asyncio
 
 # Import your models
-from server.database.database import Base 
-from server.database.models import UserModel, DocumentModel
+from src.database.database import Base 
+from src.database.models import UserModel, DocumentModel
 
 # Load environment variables
 load_dotenv()

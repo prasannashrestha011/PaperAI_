@@ -1,16 +1,16 @@
 import uuid
 from fastapi import APIRouter, Depends, File, Form, HTTPException ,UploadFile
-from server.database.crud.chat_session import ChatSessionCRUD
-from server.schemas.request import AskQuery, SessionBody
+from src.database.crud.chat_session import ChatSessionCRUD
+from src.schemas.request import AskQuery, SessionBody
 from sqlalchemy.ext.asyncio.session import AsyncSession
-from server.database.crud.document import DocumentCRUD
-from server.database.crud.storage import StorageCRUD
-from server.database.deps import get_db
-from server.database.models import DocumentModel
-from server.schemas.document import  DocumentOut
+from src.database.crud.document import DocumentCRUD
+from src.database.crud.storage import StorageCRUD
+from src.database.deps import get_db
+from src.database.models import DocumentModel
+from src.schemas.document import  DocumentOut
 from starlette.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR 
-from server.agent.builder import build_knowledge_graph
-from server.schemas.response import AgentResponse,ExtractionResponse
+from src.agent.builder import build_knowledge_graph
+from src.schemas.response import AgentResponse,ExtractionResponse
 upload_router=APIRouter(prefix="/upload")
 
 

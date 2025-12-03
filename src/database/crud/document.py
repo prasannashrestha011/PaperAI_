@@ -3,8 +3,8 @@ from sqlalchemy.ext.asyncio.session import AsyncSession
 from uuid import UUID
 from typing import List, Optional
 
-from server.database.models import DocumentModel
-from server.schemas.document import DocumentCreate, DocumentUpdate 
+from src.database.models import DocumentModel
+from src.schemas.document import DocumentCreate, DocumentUpdate 
 
 class DocumentCRUD:
    def __init__(self,model) -> None:

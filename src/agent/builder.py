@@ -7,7 +7,7 @@ File contains:
 import spacy
 
 from unstructured.partition.pdf import partition_pdf
-from server.agent.graph_store import kg_store
+from src.agent.graph_store import kg_store
 from .extractor import Entity_Relation_Extractor
 import requests
 from io import BytesIO

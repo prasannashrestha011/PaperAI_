@@ -4,8 +4,8 @@ from datetime import  datetime,timezone
 import uuid
 from fastapi import HTTPException, UploadFile
 from starlette.status import HTTP_413_CONTENT_TOO_LARGE
-from  server.database.supabase_client import supabase
-from server.schemas.document import DocumentCreate
+from  src.database.supabase_client import supabase
+from src.schemas.document import DocumentCreate
 
 BUCKET_NAME = "pdfs" 
 MAX_FILE_SIZE=10*1024*1024

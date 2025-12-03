@@ -3,7 +3,7 @@ import uuid
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import Column, Integer,String ,ForeignKey,Text,DateTime
 from sqlalchemy.orm import relationship
-from server.database.database import Base
+from src.database.database import Base
 
 def generate_uuid():
     return uuid.uuid4()   
