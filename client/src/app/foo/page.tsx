@@ -2,15 +2,13 @@
 import { testCitations,testResult } from '@/mis/text';
 import { parseCitations } from '@/utils/text_parser';
 export default function PaperWithCitations() {
-  
-
   const handleCitationClick = (numbers:number[]) => {
     const citationTexts = numbers
       .map(num => {
         const idx = num - 1;
         return testCitations[idx] 
-          ? `[${num}] ${testCitations[idx]}` 
-          : `[${num}] Citation not found`;
+          ? `${testCitations[idx]}` 
+          : `Citation not found`;
       })
       .join('\n\n');
       console.log("Citation texts: ",citationTexts)
@@ -22,7 +20,7 @@ export default function PaperWithCitations() {
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white">
       <h1 className="text-2xl font-bold mb-6 text-gray-800">
-        Research Paper with Interactive Citations
+        <b>This is a result generate by AI</b>
       </h1>
       
       <div className="prose prose-lg">
@@ -41,7 +39,8 @@ export default function PaperWithCitations() {
                 </sup>
               );
             }
-          })}
+          })
+          }
         </p>
       </div>
 
