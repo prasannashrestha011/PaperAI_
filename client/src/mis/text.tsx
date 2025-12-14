@@ -1,29 +1,52 @@
-export const testResult=`
-This paper presents a novel Discrete-Action Deep Q-Network (DQN) approach for scheduling Energy Storage Systems (ESS) in residential households with the primary objective of minimizing energy costs [^1]. The research addresse
-s the growing demand for electric energy and the limitations of clean sources, highlighting the importance of demand-side energy management to ensure sustainable growth and avoid power system instability [^2, ^3,^4].            
-                                                                                                                                                                                                                                 
-The core problem tackled is the inherent complexity of optimizing energy scheduling due to factors like uncertain energy demand, renewable generation, large system scale, and conflicting economic and technical requirements [^
-4]. Traditional approaches like market-based demand response programs often require active user participation, which can be inconvenient [^5]. The paper proposes integrating Distributed Energy Resources (DER) and ESS with an 
-Energy Management System (EMS) at the household level to overcome this, allowing users to efficiently consume energy and potentially generate income by optimizing energy import/export based on price fluctuations [^6].        
-                                                                                                                                                                                                                                 
-The proposed methodology formulates the energy scheduling problem as a Markov Decision Process (MDP) from the user's perspective, aiming to find the optimal hour-ahead energy schedule to minimize costs [^7]. The system state 
-at each time step includes the difference between predicted generation and demand (surplus energy), the current State of Charge (SoC) of the battery, and the import and export prices for the next hour [^8]. The action space i
-s discretized into 9 possible levels, ranging from -1 (maximum export/discharging) to 1 (maximum import/charging), including intermediate steps like -0.75, -0.5, 0, 0.5, etc. [^9, ^10]. This normalization of the state and dis
-cretization of actions are key to enabling effective state representation and decision-making [^11].                                                                                                                             
-                                                                                                                                                                                                                                 
-A reward function is defined, consisting of two components: the reward from the cost of energy imported or exported (negative for import, positive for export) and a punishment for unbalance in the system (e.g., importing at f
-ull SoC or exporting at zero surplus/SoC) [^12, ^13]. The Deep Reinforcement Learning (DRL) framework utilizes a neural network as a function approximator for the Q-value function, which maps state-action pairs to expected re
-wards [^14]. The learning algorithm employs an epsilon-greedy policy to balance exploration and exploitation, stores state transitions in an experience replay memory, and updates the neural network by minimizing the mean squa
-re error loss using the Bellman equation [^15, ^16].                                                                                                                                                                             
-                                                                                                                                                                                                                                 
-Simulation results validate the superiority of the proposed discrete-action DQN method over several other approaches:                                                                                                            
-*   It achieves cost savings of 43% compared to a baseline with no rule-based strategy [^17].                                                                                                                                    
-*   It demonstrates 21% more cost savings than the average rule-based approach [^18].                                                                                                                                            
-*   It shows an 11% improvement in cost efficiency over a three-level scheduling DQN method, which uses a limited action space of charging, discharging, or remaining idle [^19, ^20].                                           
-                                                                                                                                                                                                                                 
-The paper concludes that the finer discretization of actions significantly enhances cost efficiency and underscores the potential of this approach to improve energy management in smart grids for residential households [^21, ^
-22]. Future work is suggested to extend the model to handle the stochastic nature of real-world energy loads and generation, accounting for forecasting uncertainties to enhance robustness and practical applicability [^23].
-`
+export const testResult: string = `
+This paper presents a novel Discrete-Action Deep Q-Network (DQN) approach for scheduling Energy Storage Systems (ESS) in residential households with the primary objective of minimizing energy costsThe reward function is defined as:
+
+$$
+R(s_t, a_t) = -C_\text{import}(s_t, a_t) + C_\text{export}(s_t, a_t) - \lambda U(s_t, a_t)
+$$
+
+where:
+- \(C_\text{import}\) is the cost of importing energy,
+- \(C_\text{export}\) is the reward from exporting energy,
+- \(U(s_t, a_t)\) is the system unbalance penalty,
+- \(\lambda\) is a weighting factor.
+
+The state representation includes:
+
+$$
+s_t = \{ \text{SoC}_t, \Delta E_t, p_\text{import}^{t+1}, p_\text{export}^{t+1} \}
+$$
+
+The action space is discretized as:
+
+$$
+A = \{-1, -0.75, -0.5, 0, 0.5, 0.75, 1\}
+$$
+
+The Q-value update equation:
+
+$$
+Q(s_t, a_t) \leftarrow Q(s_t, a_t) + \alpha \Big[ r_t + \gamma \max_a Q(s_{t+1}, a) - Q(s_t, a_t) \Big]
+$$
+
+Additional formulas:
+
+- Quadratic formula: \( x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a} \)
+- Euler's identity: \( e^{i\pi} + 1 = 0 \)
+- Matrix multiplication:
+
+$$
+\mathbf{C} = \mathbf{A} \mathbf{B}, \quad
+C_{ij} = \sum_k A_{ik} B_{kj}
+$$
+
+- Summation and integral:
+
+$$
+\\sum_{n=1}^{\\infty} \\frac{1}{n^2} = \\frac{\\pi^2}{6}, \\quad
+\\int_0^\\infty e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}
+$$
+`;
 
 export const testCitations = [
   "This paper presents a Discrete-Action Deep Q-Network (DQN) approach for scheduling Energy Storage Systems (ESS) to optimize energy costs for residential households.",
@@ -37,5 +60,5 @@ export const testCitations = [
   "Action Space: Based on the state S_t, the a_t represents the decision to import or export energy for the next hour. The user can make money by importing the energy at a lower import price and the export or using battery when the import price is high. Action taken can be constrained as -P_max^{export} <= a_t <= P_max^{import}, where -P_max^{export} and P_max^{import} are the maximum allowable energy export and import, which is the maximum charging or discharging from the battery, respectively. As suggested by [14], the action is discretized into predefined steps.",
   "The input to the proposed architecture of the RL model has 9 possible actions which range from -1 to 1, such that the action space is normalized, however the action can range to n different actions that can be taken, and the total action steps can be written as: A = {a_1, a_2, a_3 ... a_n}.",
   "The proposed model normalizes the state based on the maximum allowable actions defined by the policy, enabling effective state representation and decision-making.",
-  "Reward Function: The reward R_t at each time step t consists of two components are defined as, R_t = R_{cost} + R_{unbalance}."
+  "Reward Function: The reward R_t at each time step t consists of two components are defined as, R_t = R_{cost} + R_{unbalance}.",
 ];
