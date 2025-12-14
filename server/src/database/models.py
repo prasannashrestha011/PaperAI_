@@ -9,11 +9,12 @@ def generate_uuid():
     return uuid.uuid4()   
 
 class UserModel(Base):
-    __tablename__="user"
-    id=Column(UUID(as_uuid=True),primary_key=True,index=True,default=generate_uuid)
+    __tablename__="users"
+    user_id=Column(UUID(as_uuid=True),primary_key=True,index=True,default=generate_uuid)
     username=Column(String,nullable=False,unique=True)
     password=Column(String,nullable=False)
     created_at=Column(DateTime(timezone=True),default=lambda:datetime.now(timezone.utc),nullable=False)
+    sessions=relationship("SessionModel",back_populates="user",cascade="all, delete-orphan")
 
 class DocumentModel(Base):
     __tablename__="documents"
@@ -31,12 +32,13 @@ class DocumentModel(Base):
 class SessionModel(Base):
     __tablename__="sessions"
     session_id=Column(UUID(as_uuid=True),primary_key=True,default=generate_uuid)
-    user_id=Column(UUID(as_uuid=True),nullable=False)
-    document_id=Column(UUID(as_uuid=True),nullable=False,unique=True)
+    user_id=Column(UUID(as_uuid=True),ForeignKey("users.user_id"),nullable=False)
+    document_id=Column(UUID(as_uuid=True),ForeignKey("documents.document_id"),nullable=False,unique=True)
     provider=Column(String,nullable=False)
     model=Column(String,nullable=False)
     created_at=Column(DateTime(timezone=True),default=lambda:datetime.now(timezone.utc),nullable=False)
     chat_history=relationship("ChatHistory",back_populates="session",cascade="all, delete-orphan")
+    user=relationship("UserModel",back_populates="sessions")
 
 class ChatHistory(Base):
     __tablename__ = "chat_history"
