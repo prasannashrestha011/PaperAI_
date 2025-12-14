@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
 from pydantic import BaseModel
 from  src.database.models import UserModel 
 from src.database.deps import get_db
@@ -17,10 +18,15 @@ async def create_user(new_user: UserCreate, db: AsyncSession = Depends(get_db)):
     hashed_password=hash_password(new_user.password)
     user = UserModel(username=new_user.username, password=hashed_password)
     db.add(user)
-    await db.commit()
-    await db.refresh(user)
-    
-    return {"id": user.id, "username": user.username}
+    try:
+        await db.commit()
+        await db.refresh(user)
+    except IntegrityError as e:
+        await db.rollback()
+        if "unique constraint" in str(e.orig):
+            raise HTTPException(status_code=400,detail="Username already exists")
+        raise
+    return {"id": user.user_id, "username": user.username}
 
 auth_router.post("/auth/login")
 async def login_user(user:UserCreate,res:Response,db:AsyncSession=Depends(get_db)):
