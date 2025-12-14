@@ -16,8 +16,7 @@ engine = create_async_engine(DATABASE_URL, echo=True,
         "ssl": "require",
         "timeout": 30,
         "command_timeout": 30,
-        "statement_cache_size": 0,  # <--- disables prepared statements cache
-    },)
+    })
 
 # Correct async session using async_sessionmaker
 AsyncSessionLocal = async_sessionmaker(
