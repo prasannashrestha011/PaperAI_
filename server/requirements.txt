@@ -33,3 +33,5 @@ argon2_cffi
 PyJWT==2.10.1
 
 sqlalchemy 
+PyPDF2==3.0.1
+psycopg2==2.9.11
