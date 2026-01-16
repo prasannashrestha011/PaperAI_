@@ -380,35 +380,3 @@ You are now ready to provide comprehensive, well-structured answers in clear hie
 
 
 
-
-async def main():
-    print("Loading spaCy model...")
-    start = time.perf_counter()
-
-    
-
-    defaults = ("111", "938a77a8-65e0-4f56-bd3b-df0b115008fc", "gemini", "gemini-2.5-flash")
-    user_id="111"
-    document_id="4cc253ef-63bb-4146-8747-5db3e6688026"
-    provider="gemini"
-    model="gemini-2.5-flash"
-    pdf_path="./data/rag_service.pdf"
-    
-    agent=Neo4jRAGSystem(user_id,document_id,provider,model)
-     # Q&A Loop
-    while True:
-        q = input("\nQ: ").strip()
-        if q.lower() in ['exit', 'quit']: break
-        if not q: continue
-        response=await agent.answer_question(q)
-        final_answer = response["answer"]
-        print(final_answer["answer"])
-
-        print("\n citation:")
-        print(final_answer["citation"])
-
-        print("\n tools called: ")
-        print(final_answer["tool_called"])
-
-if __name__ == "__main__":
-    asyncio.run(main())
