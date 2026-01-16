@@ -1,12 +1,12 @@
 
-
+import io
 from datetime import  datetime,timezone
 import uuid
 from fastapi import HTTPException, UploadFile
 from starlette.status import HTTP_413_CONTENT_TOO_LARGE
-from  src.database.supabase_client import supabase
 from src.schemas.document import DocumentCreate
-
+from src.database.minio_client import client,MINIO_BUCKET
+paperai="h"
 BUCKET_NAME = "pdfs" 
 MAX_FILE_SIZE=10*1024*1024
 
@@ -28,17 +28,21 @@ class StorageCRUD:
                 status_code=HTTP_413_CONTENT_TOO_LARGE,
                 detail="File size exceeded")
 
-            file_path=f"{user_id}/{document_id}/{file_name}"
+            file_path=f"{user_id}/{document_id}/{BUCKET_NAME}/{file_name}"
 
-            supabase.storage.from_(BUCKET_NAME).upload(file_path,file_content)
-
-            public_url=supabase.storage.from_(BUCKET_NAME).get_public_url(file_path)
+            client.put_object(
+                bucket_name=MINIO_BUCKET,
+                object_name=file_path,
+                data=io.BytesIO(file_content),
+                length=len(file_content),
+                content_type="pdf"
+            )
 
             doc_in=DocumentCreate(
                 user_id=user_id,
                 document_id=document_id,
                 file_name=file_name,
-                file_path=public_url, 
+                 file_path=file_path, 
                 upload_timestamp=datetime.now(timezone.utc),
                 file_size=file_size
             )
@@ -49,7 +53,8 @@ class StorageCRUD:
 
     def delete_pdf(self,file_path:str):
          try:
-            response=supabase.storage.from_(BUCKET_NAME).remove([file_path])
+            # response=supabase.storage.from_(BUCKET_NAME).remove([file_path])
+            print("delete")
          except Exception as e:
             print(f"Bucket Deletiton error:{e}")
 
