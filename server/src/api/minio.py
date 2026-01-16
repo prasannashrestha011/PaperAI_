@@ -136,6 +136,7 @@ async def view_pdf(filename: str):
     finally:
         response.close()
         response.release_conn()
+        
 @router.delete("/delete/{filename}")
 async def delete_pdf(filename: str):
     """Delete a PDF file from MinIO"""
