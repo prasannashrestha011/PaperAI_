@@ -43,7 +43,7 @@ async def extract_pdf(user_id:uuid.UUID=Form(...,description="user id"),file:Upl
 
             )
         doc_out=await document_crud.create(db=db,obj_in=doc_in)
-        await build_knowledge_graph(pdf_path=str(doc_out.file_path),document_id=str(doc_out.document_id),provider="gemini",model="gemini-2.5-flash",quality="H")
+        # await build_knowledge_graph(pdf_path=str(doc_out.file_path),document_id=str(doc_out.document_id),provider="gemini",model="gemini-2.5-flash",quality="H")
 
         session_in=SessionBody(user_id=user_id,document_id=uuid.UUID(str(doc_out.document_id)),provider="gemini",model="gemini-2.5-flash")
         session_out=await ChatSessionCRUD.create_session(session_in,db)
