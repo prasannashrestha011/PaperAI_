@@ -5,7 +5,7 @@ from src.utils.jwt import decode_access_token
 
 class JWTMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        protected_paths = ["/me", "/protected"]
+        protected_paths = ["/auth/me"]
 
         if any(request.url.path.startswith(path) for path in protected_paths):
             token = request.cookies.get("access_token")

@@ -9,16 +9,13 @@ deep_agent_router = APIRouter(prefix="/deep")
 @deep_agent_router.post("/ask")
 async def question(session: SessionBody, query: str = Body(), db: AsyncSession = Depends(get_db)):
 
-    # Heavy imports here
     from src.database.crud.document import DocumentCRUD
     from src.database.models import DocumentModel
     from src.utils.extractor import get_pdf_from_url
-    from src.test import answer_question
+    from src.agent.deep_agent import answer_question
 
-    # Initialize CRUD here
     doc_crud = DocumentCRUD(DocumentModel)
 
-    # --- fetch document ---
     doc_obj = await doc_crud.get(db, session.document_id)
     if not doc_obj:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Document not found")
@@ -26,7 +23,6 @@ async def question(session: SessionBody, query: str = Body(), db: AsyncSession =
     # --- extract text ---
     text = await get_pdf_from_url(url=str(doc_obj.file_path))
 
-    # --- collect full answer ---
     full_answer = []
     async for chunk in answer_question(query, text):
         full_answer.append(chunk)
