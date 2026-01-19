@@ -13,11 +13,11 @@ services:
 
   neo4j:
     image: neo4j:5
-    container_name: my_graph_db
     environment:
-      NEO4J_AUTH: neo4j/9843
+      NEO4J_AUTH: neo4j/98439843
     ports:
       - "7474:7474"
+      - "7687:7687"
     volumes:
       - neo4jdata:/data
 
