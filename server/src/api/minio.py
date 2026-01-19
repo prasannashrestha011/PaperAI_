@@ -4,7 +4,7 @@ from minio import Minio
 from minio.error import S3Error
 import io
 
-router = APIRouter(prefix="/pdf", tags=["PDF Storage"])
+router = APIRouter(prefix="/test", tags=["PDF Storage"])
 
 # MinIO client configuration
 minio_client = Minio(
@@ -87,19 +87,24 @@ async def download_pdf(filename: str):
         response.release_conn()
 
 
-@router.get("/list")
-async def list_pdfs():
+@router.get("/list/{user_id}")
+async def list_pdfs(user_id:str):
     """List all PDF files in MinIO"""
     
     try:
-        objects = minio_client.list_objects(BUCKET_NAME)
+        objects = minio_client.list_objects(
+            BUCKET_NAME,
+            prefix=f"{user_id}/",
+            recursive=True
+        )
         
         pdf_list = []
         for obj in objects:
             pdf_list.append({
-                "filename": obj.object_name,
+                "filename": str(obj.object_name).split("/")[-1],
+                "filePath":obj.object_name,
                 "size": obj.size,
-                "last_modified": obj.last_modified
+                "last_modified": obj.last_modified,
             })
         
         return {

@@ -6,7 +6,7 @@ from typing import Optional
 from fastapi import Cookie, HTTPException
 
 load_dotenv()
-JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")# change to a strong secret
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY","my_secret")
 ALGORITHM =os.getenv("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES =60 
 

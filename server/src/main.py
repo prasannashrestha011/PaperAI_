@@ -1,7 +1,8 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from src.api.uploader import upload_router
+from src.api.document import router as upload_router 
 from src.api.minio import router as pdf_router
+from src.api.auth import auth_router
 from fastapi.middleware.cors import CORSMiddleware
 origins = [
     "http://localhost:3000",
@@ -28,3 +29,4 @@ app.add_middleware(
 )
 app.include_router(upload_router)
 app.include_router(pdf_router)
+app.include_router(auth_router)
