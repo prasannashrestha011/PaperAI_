@@ -2,9 +2,11 @@ from csv import Error
 import io
 from typing import List
 import uuid
+from celery import Task
 from fastapi import APIRouter, Depends, File, Form, HTTPException ,UploadFile
 from fastapi.responses import StreamingResponse
 from minio import S3Error
+from src.celery_app import build_kg_task 
 from src.database.crud.chat_session import ChatSessionCRUD
 from src.schemas.request import AskQuery, SessionBody
 from sqlalchemy.ext.asyncio.session import AsyncSession
@@ -14,7 +16,6 @@ from src.database.deps import get_db
 from src.database.models import DocumentModel
 from src.schemas.document import  DocumentBase, DocumentOut, DocumentUpdate
 from starlette.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR, HTTP_404_NOT_FOUND
-from src.agent.builder import build_knowledge_graph
 from src.schemas.response import AgentResponse,ExtractionResponse
 from sqlalchemy.exc import SQLAlchemyError
 router=APIRouter(prefix="/pdf")
@@ -49,8 +50,7 @@ async def extract_pdf(user_id:uuid.UUID=Form(...,description="user id"),file:Upl
 
             )
         doc_out=await document_crud.create(db=db,obj_in=doc_in)
-        await build_knowledge_graph(pdf_path=str(doc_out.file_path),document_id=str(doc_out.document_id),provider="gemini",model="gemini-2.5-flash",quality="L")
-
+        build_kg_task.delay(pdf_path=str(doc_out.file_path),document_id=str(doc_out.document_id),provider="gemini",model="gemini-2.5-flash",quality="L")
         session_in=SessionBody(user_id=user_id,document_id=uuid.UUID(str(doc_out.document_id)),provider="gemini",model="gemini-2.5-flash")
         session_out=await ChatSessionCRUD.create_session(session_in,db)
 
