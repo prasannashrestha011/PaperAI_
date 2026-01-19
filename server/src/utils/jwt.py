@@ -1,3 +1,4 @@
+import logging
 import os
 from dotenv import load_dotenv
 import jwt
@@ -5,6 +6,7 @@ from datetime import datetime, timedelta,timezone
 from typing import Optional
 from fastapi import Cookie, HTTPException
 
+logger = logging.getLogger(__name__)
 load_dotenv()
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY","my_secret")
 ALGORITHM =os.getenv("ALGORITHM")
@@ -21,9 +23,11 @@ def decode_access_token(token: str):
     try:
         payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[ALGORITHM])
         return payload
-    except jwt.ExpiredSignatureError:
+    except jwt.ExpiredSignatureError as e:
+        logger.warning("JWT expired %s",e)
         return None
-    except jwt.PyJWTError:
+    except jwt.PyJWTError as e:
+        logger.error("Invalid jwt %s: ",e)
         return None
 
 
