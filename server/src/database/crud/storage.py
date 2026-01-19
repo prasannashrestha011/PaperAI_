@@ -1,6 +1,7 @@
 
 import io
 from datetime import  datetime,timezone
+from typing import Optional
 import uuid
 from fastapi import HTTPException, UploadFile
 from datetime import timedelta
@@ -14,7 +15,7 @@ class StorageCRUD:
     def __init__(self) -> None:
         pass
 
-    async def upload_pdf(self,user_id:uuid.UUID,uploaded_file:UploadFile)->DocumentCreate | None:
+    async def upload_doc(self,user_id:uuid.UUID,uploaded_file:UploadFile)->DocumentCreate | None:
         try:
             if uploaded_file.filename is None:
                 raise ValueError("Uploaded file has no file name")
@@ -57,7 +58,7 @@ class StorageCRUD:
         except Exception as e:
             print(f"Bucket Upload error: {e}")
 
-    async def list_docs(user_id:str)->DocumentOut:
+    async def list_docs(self,user_id:str):
 
         objects = client.list_objects(
             MINIO_BUCKET,
@@ -90,3 +91,17 @@ class StorageCRUD:
         
         except S3Error as e:
             raise HTTPException(status_code=500, detail=f"MinIO error: {str(e)}")
+    async def view_doc(self,file_path:str)->Optional[bytes]:
+        
+        try:
+            response = client.get_object(MINIO_BUCKET, file_path)
+            pdf_data = response.read()
+            
+            return pdf_data
+        
+        except S3Error as e:
+            if e.code == "NoSuchKey":
+                raise HTTPException(status_code=404, detail=f"PDF '{file_path}' not found")
+            raise HTTPException(status_code=500, detail=f"MinIO error: {str(e)}")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error viewing file: {str(e)}")
