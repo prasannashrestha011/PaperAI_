@@ -1,7 +1,9 @@
 from csv import Error
+import io
 from typing import List
 import uuid
 from fastapi import APIRouter, Depends, File, Form, HTTPException ,UploadFile
+from fastapi.responses import StreamingResponse
 from minio import S3Error
 from src.database.crud.chat_session import ChatSessionCRUD
 from src.schemas.request import AskQuery, SessionBody
@@ -11,7 +13,7 @@ from src.database.crud.storage import StorageCRUD
 from src.database.deps import get_db
 from src.database.models import DocumentModel
 from src.schemas.document import  DocumentBase, DocumentOut, DocumentUpdate
-from starlette.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR
+from starlette.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR, HTTP_404_NOT_FOUND
 from src.agent.builder import build_knowledge_graph
 from src.schemas.response import AgentResponse,ExtractionResponse
 from sqlalchemy.exc import SQLAlchemyError
@@ -39,7 +41,7 @@ async def extract_pdf(user_id:uuid.UUID=Form(...,description="user id"),file:Upl
             detail="Invalid file type"
         )
     try:
-        doc_in=await storage_crud.upload_pdf(user_id,file)
+        doc_in=await storage_crud.upload_doc(user_id,file)
         if doc_in is None:
             raise HTTPException( 
                 status_code=HTTP_500_INTERNAL_SERVER_ERROR,
@@ -62,7 +64,37 @@ async def extract_pdf(user_id:uuid.UUID=Form(...,description="user id"),file:Upl
                 status_code=HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=str(e)
             )
+@router.get("/view/{doc_id:path}")
+async def view_pdf(doc_id: str, db: AsyncSession = Depends(get_db)):
+    """View/preview a PDF file from MinIO in browser"""
+    if not doc_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Document ID is missing"
+        )
 
+    try:
+        pdf_data = await storage_crud.view_doc(doc_id)
+        if not pdf_data:
+            raise HTTPException(
+                status_code=404,
+                detail="Document not found"
+            )
+        return StreamingResponse(
+            io.BytesIO(pdf_data),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"inline; filename={doc_id.split('/')[-1]}"}
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error retrieving document: {str(e)}"
+        )
+
+    
 
 @router.get("/list/{user_id}",response_model=List[DocumentBase])
 async def list_pdfs(user_id,db:AsyncSession=Depends(get_db)):
