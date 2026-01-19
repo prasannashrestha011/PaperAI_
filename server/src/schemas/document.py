@@ -20,10 +20,11 @@ class DocumentCreate(DocumentBase):
 
 class DocumentUpdate(BaseModel):
     file_name: Optional[str] = None
-    file_path: Optional[str] = None
-    file_size: Optional[int] = None
     upload_timestamp: Optional[datetime] = None
 
-class DocumentOut(DocumentBase):
-    class Config:
-         from_attributes= True
+class DocumentOut(BaseModel):
+    filename:str
+    filePath:str
+    size:int
+    last_modified:datetime
+
