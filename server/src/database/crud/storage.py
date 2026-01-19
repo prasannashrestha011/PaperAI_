@@ -3,11 +3,11 @@ import io
 from datetime import  datetime,timezone
 import uuid
 from fastapi import HTTPException, UploadFile
+from datetime import timedelta
+from minio import S3Error
 from starlette.status import HTTP_413_CONTENT_TOO_LARGE
-from src.schemas.document import DocumentCreate
+from src.schemas.document import DocumentCreate,DocumentOut
 from src.database.minio_client import client,MINIO_BUCKET
-paperai="h"
-BUCKET_NAME = "pdfs" 
 MAX_FILE_SIZE=10*1024*1024
 
 class StorageCRUD:
@@ -28,7 +28,7 @@ class StorageCRUD:
                 status_code=HTTP_413_CONTENT_TOO_LARGE,
                 detail="File size exceeded")
 
-            file_path=f"{user_id}/{document_id}/{BUCKET_NAME}/{file_name}"
+            file_path=f"{user_id}/{document_id}/{file_name}"
 
             client.put_object(
                 bucket_name=MINIO_BUCKET,
@@ -38,11 +38,17 @@ class StorageCRUD:
                 content_type="pdf"
             )
 
+            url = client.presigned_get_object(
+                MINIO_BUCKET,
+                file_path,
+                expires=timedelta(hours=1)
+            )
+
             doc_in=DocumentCreate(
                 user_id=user_id,
                 document_id=document_id,
                 file_name=file_name,
-                 file_path=file_path, 
+                 file_path=url, 
                 upload_timestamp=datetime.now(timezone.utc),
                 file_size=file_size
             )
@@ -51,10 +57,36 @@ class StorageCRUD:
         except Exception as e:
             print(f"Bucket Upload error: {e}")
 
-    def delete_pdf(self,file_path:str):
-         try:
-            # response=supabase.storage.from_(BUCKET_NAME).remove([file_path])
-            print("delete")
-         except Exception as e:
-            print(f"Bucket Deletiton error:{e}")
+    async def list_docs(user_id:str)->DocumentOut:
 
+        objects = client.list_objects(
+            MINIO_BUCKET,
+            prefix=f"{user_id}/",
+            recursive=True
+        )
+        
+        pdf_list = []
+        for obj in objects:
+            pdf_list.append({
+                "filename": str(obj.object_name).split("/")[-1],
+                "filePath":obj.object_name,
+                "size": obj.size,
+                "last_modified": obj.last_modified,
+            })
+        
+        return {
+            "bucket": MINIO_BUCKET,
+            "count": len(pdf_list),
+            "pdfs": pdf_list
+        }
+    def delete_pdf(self,file_path:str):
+        try:
+            client.remove_object(MINIO_BUCKET, file_path)
+            
+            return {
+                "message": "PDF deleted successfully",
+                "filename": file_path 
+            }
+        
+        except S3Error as e:
+            raise HTTPException(status_code=500, detail=f"MinIO error: {str(e)}")
