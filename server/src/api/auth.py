@@ -28,10 +28,11 @@ async def create_user(new_user: UserCreate, db: AsyncSession = Depends(get_db)):
         raise
     return {"id": user.user_id, "username": user.username}
 
-auth_router.post("/auth/login")
+@auth_router.post("/auth/login")
 async def login_user(user:UserCreate,res:Response,db:AsyncSession=Depends(get_db)):
     result=await db.execute(select(UserModel).where(UserModel.username==user.username))
-    db_user=result.scalars().first()
+    db_user:UserModel=result.scalars().first()
+    print(db_user)
     if not db_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -42,7 +43,7 @@ async def login_user(user:UserCreate,res:Response,db:AsyncSession=Depends(get_db
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Incorrect password"
         )
-    token = create_access_token({"user_id": str(db_user.id)})
+    token = create_access_token({"user_id": str(db_user.user_id)})
     res.set_cookie(
         key="access_token",
         value=token,
@@ -51,5 +52,5 @@ async def login_user(user:UserCreate,res:Response,db:AsyncSession=Depends(get_db
         samesite="lax",
         max_age=60*60,  # 1 hour
     )
-    return {"id": db_user.id, "username": db_user.username, "message": "Login successful"}
+    return {"id": db_user.user_id, "username": db_user.username, "message": "Login successful"}
 
