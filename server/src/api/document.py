@@ -2,12 +2,14 @@ from csv import Error
 import io
 from typing import List
 import uuid
+from amqp import NotFound
 from celery import Task
 from fastapi import APIRouter, Depends, File, Form, HTTPException ,UploadFile
 from fastapi.responses import StreamingResponse
 from minio import S3Error
 from src.celery_app import build_kg_task 
 from src.database.crud.chat_session import ChatSessionCRUD
+from src.schemas import document
 from src.schemas.request import AskQuery, SessionBody
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from src.database.crud.document import DocumentCRUD
@@ -15,7 +17,7 @@ from src.database.crud.storage import StorageCRUD
 from src.database.deps import get_db
 from src.database.models import DocumentModel
 from src.schemas.document import  DocumentBase, DocumentOut, DocumentUpdate
-from starlette.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR, HTTP_404_NOT_FOUND
+from starlette.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR, HTTP_404_NOT_FOUND,HTTP_200_OK
 from src.schemas.response import AgentResponse,ExtractionResponse
 from sqlalchemy.exc import SQLAlchemyError
 router=APIRouter(prefix="/pdf")
@@ -23,6 +25,28 @@ router=APIRouter(prefix="/pdf")
 
 document_crud=DocumentCRUD(DocumentModel)       
 storage_crud=StorageCRUD()
+
+
+@router.get("/info/{id}", response_model=DocumentBase, status_code=HTTP_200_OK)
+async def get_info(id: str, db: AsyncSession = Depends(get_db)):
+    try:
+        doc_id = uuid.UUID(id)
+    except ValueError:
+        raise HTTPException(
+            status_code=HTTP_400_BAD_REQUEST,
+            detail="Invalid document ID"
+        )
+
+    doc_out = await document_crud.get(db, document_id=doc_id)
+
+    if not doc_out:
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND,
+            detail="Document details not found"
+        )
+
+    return doc_out
+
 
 @router.post("/upload",response_model=ExtractionResponse,status_code=HTTP_201_CREATED)
 async def extract_pdf(user_id:uuid.UUID=Form(...,description="user id"),file:UploadFile=File(...,description="pdf file to upload"),db:AsyncSession=Depends(get_db)):
