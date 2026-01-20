@@ -9,10 +9,14 @@ import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import usePdfLoader from "./hooks/PdfLoader";
 
 pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.mjs";
-
-const TestViewer = () => {
+interface Props{
+  userID:string
+  docID:string
+  filename:string
+}
+const PdfViewer = ({userID,docID,filename}:Props) => {
   const pdfUrl =
-    "https://cwlklruqhmtcgrtsrmkh.supabase.co/storage/v1/object/public/pdfs/1cfeba82-12ac-4bdd-b77c-c26973fd5551/c8a7ce1e-da24-445f-8bb2-0a647e883709/sample.pdf";
+    `http://localhost:8000/pdf/view/${userID}/${docID}/${filename}`;
   const [currSearchText, setCurrSearchText] = useState<string>("");
   const {
     pages,
@@ -129,4 +133,4 @@ const TestViewer = () => {
   );
 };
 
-export default TestViewer;
+export default PdfViewer;
