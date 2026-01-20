@@ -2,7 +2,7 @@
 "use client"
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
-const TestResizable = () => {
+const DocViewResizeable = () => {
   return (
     <div className="h-screen w-screen flex">
       <PanelGroup direction="horizontal">
@@ -20,4 +20,4 @@ const TestResizable = () => {
   );
 };
 
-export default TestResizable;
+export default DocViewResizeable;
